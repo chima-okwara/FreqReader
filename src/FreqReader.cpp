@@ -9,7 +9,7 @@
 #include <Arduino.h>
 #include <FreqReader.hpp>
 
-unsigned long FreqReader::getHz(const uint8_t &period)
+unsigned long FreqReaderDigital::getHz(const uint8_t &period)
 {
   PulseCount = 0;
   auto tempo {millis()+(period*1000)};
@@ -28,7 +28,7 @@ unsigned long FreqReader::getHz(const uint8_t &period)
   return (PulseCount/period);
 }
 
-unsigned long FreqReader::getHzAnalogue(void)
+unsigned long FreqReaderAnalogue::getHz(void)
 {
   unsigned long frequency { };
   frequency = analogueFreqReader::getHzA();

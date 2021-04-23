@@ -20,7 +20,7 @@
   Thanks to Arduino LLC
   for the ArduinoFrequencyMeter library published on GitHub.
 **************************************************************************************************/
-
+#include <wiring_private.h>
 #include "analogueFreqReader.hpp"
 
 #define ARRAY_DEPTH             20
@@ -56,12 +56,12 @@ static int newMaxAmplitude;                              // Variable used to che
 
 static volatile int checkMaxAmp;                         // Used to update the new frequency in base of the amplitude threshold
 
-AudioFrequencyMeter::analogueFreqReader()
+analogueFreqReader::analogueFreqReader()
 {
   initializeVariables();
 }
 
-void AudioFrequencyMeter::begin(uint8_t &pin, uint32_t &rate)
+void analogueFreqReader::begin(uint8_t &pin, uint32_t &rate)
 {
   samplePin = pin;                              // Store ADC channel to sample
   sampleRate = rate;                            // Store sample rate value
@@ -74,20 +74,20 @@ void AudioFrequencyMeter::begin(uint8_t &pin, uint32_t &rate)
   tcEnable();
 }
 
-void AudioFrequencyMeter::end()
+void analogueFreqReader::end()
 {
   ADCdisable();
   tcDisable();
   tcReset();
 }
 
-void AudioFrequencyMeter::setClippingPin(int pin)
+void analogueFreqReader::setClippingPin(int pin)
 {
   clippingPin = pin;                              // Store the clipping pin value
   pinMode(clippingPin, OUTPUT);
 }
 
-void AudioFrequencyMeter::checkClipping()
+void analogueFreqReader::checkClipping()
 {
   if (clipping)
   {
@@ -96,28 +96,28 @@ void AudioFrequencyMeter::checkClipping()
   }
 }
 
-void AudioFrequencyMeter::setAmplitudeThreshold(int threshold)
+void analogueFreqReader::setAmplitudeThreshold(int threshold)
 {
   amplitudeThreshold = abs(MIDPOINT - threshold);
 }
 
-void AudioFrequencyMeter::setTimerTolerance(int tolerance)
+void analogueFreqReader::setTimerTolerance(int tolerance)
 {
   timerTolerance = tolerance;
 }
 
-void AudioFrequencyMeter::setSlopeTolerance(int tolerance)
+void analogueFreqReader::setSlopeTolerance(int tolerance)
 {
   slopeTolerance = tolerance;
 }
 
-void AudioFrequencyMeter::setBandwidth(float min, float max)
+void analogueFreqReader::setBandwidth(float min, float max)
 {
   minFrequency = min;
   maxFrequency = max;
 }
 
-float AudioFrequencyMeter::getHzA()
+float analogueFreqReader::getHzA()
 {
   float frequency = -1;
 
@@ -138,7 +138,7 @@ float AudioFrequencyMeter::getHzA()
    Private Utility Functions
 */
 
-void AudioFrequencyMeter::initializeVariables()
+void analogueFreqReader::initializeVariables()
 {
   slopeTolerance = DEFAULT_SLOPE_TOLERANCE;
   timerTolerance = DEFAULT_TIMER_TOLERANCE;
@@ -159,7 +159,7 @@ void AudioFrequencyMeter::initializeVariables()
   maxFrequency = DEFAULT_MAX_FREQUENCY;
 }
 
-void AudioFrequencyMeter::ADCconfigure()
+void analogueFreqReader::ADCconfigure()
 {
   ADC->CTRLB.bit.RESSEL = ADC_CTRLB_RESSEL_8BIT_Val;
   while (ADCisSyncing())
@@ -185,21 +185,21 @@ bool ADCisSyncing()
   return (ADC->STATUS.bit.SYNCBUSY);
 }
 
-void AudioFrequencyMeter::ADCdisable()
+void analogueFreqReader::ADCdisable()
 {
   ADC->CTRLA.bit.ENABLE = 0x00;                               // Disable ADC
   while (ADCisSyncing())
     ;
 }
 
-void AudioFrequencyMeter::ADCenable()
+void analogueFreqReader::ADCenable()
 {
   ADC->CTRLA.bit.ENABLE = 0x01;                               // Enable ADC
   while (ADCisSyncing())
     ;
 }
 
-void AudioFrequencyMeter::ADCsetMux()
+void analogueFreqReader::ADCsetMux()
 {
   if ( samplePin < A0 )
   {
@@ -213,7 +213,7 @@ void AudioFrequencyMeter::ADCsetMux()
   ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[samplePin].ulADCChannelNumber; // Selection for the positive ADC input
 }
 
-void AudioFrequencyMeter::tcConfigure()
+void analogueFreqReader::tcConfigure()
 {
   // Enable GCLK for TCC2 and TC5 (timer counter input clock)
   GCLK->CLKCTRL.reg = (uint16_t) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID(GCM_TC4_TC5)) ;
@@ -247,19 +247,19 @@ void AudioFrequencyMeter::tcConfigure()
     ;
 }
 
-bool AudioFrequencyMeter::tcIsSyncing()
+bool analogueFreqReader::tcIsSyncing()
 {
   return TC5->COUNT16.STATUS.reg & TC_STATUS_SYNCBUSY;
 }
 
-void AudioFrequencyMeter::tcEnable()
+void analogueFreqReader::tcEnable()
 {
   TC5->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE;
   while (tcIsSyncing())
     ;
 }
 
-void AudioFrequencyMeter::tcReset()
+void analogueFreqReader::tcReset()
 {
   TC5->COUNT16.CTRLA.reg = TC_CTRLA_SWRST;
   while (tcIsSyncing())
@@ -268,7 +268,7 @@ void AudioFrequencyMeter::tcReset()
     ;
 }
 
-void AudioFrequencyMeter::tcDisable()
+void analogueFreqReader::tcDisable()
 {
   // Disable TC5
   TC5->COUNT16.CTRLA.reg &= ~TC_CTRLA_ENABLE;

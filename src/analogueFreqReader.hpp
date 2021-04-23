@@ -20,10 +20,11 @@
   Thanks to Arduino LLC
   for the ArduinoFrequencyMeter library published on GitHub.
 **************************************************************************************************/
+#ifndef ANALOGUE_FREQ_READER
+#define ANALOGUE_FREQ_READER
 
-
-#include "Arduino.h"
-#include "wiring_private.h"
+#include <Arduino.h>
+#include <wiring_private.h>
 
 #pragma once
 
@@ -54,8 +55,8 @@ class analogueFreqReader
     void setBandwidth(float minFrequency, float maxFrequency);
 
     float getHzA(void);
-    inline float getKHzA(void) { return (getHz()/1000); }
-    inline float getMHzA(void) { return (getHz()/1000000); }
+    inline float getKHzA(void) { return (getHzA()/1000); }
+    inline float getMHzA(void) { return (getHzA()/1000000); }
 
   private:
     void initializeVariables(void);
@@ -70,12 +71,15 @@ class analogueFreqReader
     void tcDisable(void);
     void tcReset(void);
 
-  private:
-    int samplePin;           // Pin used to sample the signal
-    unsigned int sampleRate; // ADC sample rate
+  protected:
+    uint8_t samplePin;           // Pin used to sample the signal
+    uint32_t sampleRate; // ADC sample rate
 
     int amplitudeThreshold;
 
     float minFrequency;      // Variable to store the minimum frequency that can be applied in input
     float maxFrequency;      // Variable to store the maximum frequency that can be applied in input
 };
+
+
+#endif
