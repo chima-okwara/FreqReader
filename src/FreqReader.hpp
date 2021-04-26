@@ -8,10 +8,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef FREQ_READER
 #define FREQ_READER
-
+#define DEFAULT_PERIOD 1
 #include <Arduino.h>
-#include "analogueFreqReader.hpp"
-
 
 class FreqReaderDigital
 {
@@ -22,15 +20,18 @@ public:
 
   inline void begin()
   {
-    pinMode(SignalPin, INPUT);
-    digitalWrite(SignalPin, HIGH);
-    set = true;
+    pinMode(SignalPin, INPUT);      //Declares the input pin
+    digitalWrite(SignalPin, HIGH);  //Enables internal pull-up resistor
+    set = true;                     //To verify that begin has been called.
   }
 
-  unsigned long getHz(void) { return(getHz(1)); }
   unsigned long getHz(const uint8_t &period);
   unsigned long getKHz(const uint8_t &period) { return (getHz(period)/1000); }
   unsigned long getMhz(const uint8_t &period) { return (getHz(period)/1000000); }
+
+  unsigned long getHz(void) { return(getHz(DEFAULT_PERIOD)); }
+  unsigned long getKHz(void) { return (getHz()/1000); }
+  unsigned long getMHz(void) { return (getHz()/1000); }
 
 private:
   bool set { };
@@ -38,37 +39,33 @@ private:
   uint32_t PulseCount { };
 };
 
-class FreqReaderAnalogue : public analogueFreqReader
+
+
+class FreqReaderAnalogue    //TODO: Reimplement using ADC
 {
 public:
-  FreqReaderAnalogue(uint8_t &inputSignalPin, uint32_t &sampleRate)
-            :SignalPin{&inputSignalPin}, SampleRate{&sampleRate}
-  {
-    setBandwidth(50, 5000);
-  }
-
   FreqReaderAnalogue(const uint8_t &inPutSignalPin)
-  {
-    *SignalPin = inPutSignalPin;
-    *SampleRate = 45000ul;
-    setBandwidth(50, 5000);
-  }
+                      :SignalPin{inPutSignalPin}
+  { }
 
-  void begin()
+  inline void begin()
   {
-    analogueFreqReader::begin(*SignalPin, *SampleRate);
+    pinMode(SignalPin, INPUT);
     set = true;
   }
 
-  unsigned long getHz(void);
+  unsigned long getHz(const uint8_t &period);
+  unsigned long getKHz(const uint8_t &period) { return (getHz(period)/1000); }
+  unsigned long getMhz(const uint8_t &period) { return (getHz(period)/1000000); }
+
+  unsigned long getHz(void) { return (getHz(DEFAULT_PERIOD)); }
   unsigned long getKHz(void) { return (getHz()/1000); }
   unsigned long getMhz(void) { return (getHz()/1000000); }
 
 private:
   bool set { };
-  uint8_t *SignalPin {&samplePin}, Check {HIGH};
+  uint8_t SignalPin { };
   uint32_t PulseCount { };
-  uint32_t *SampleRate {&sampleRate};
 
 };
 #endif
