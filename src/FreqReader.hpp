@@ -1,28 +1,52 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //*FILE NAME:       main.cpp
 //*FILE DESC:       Header file for FreqReader library.
-//*FILE VERSION:    0.1.1
+//*FILE VERSION:    0.3.1
 //*FILE AUTHOR:     Chimaroke Okwara
-//*LAST MODIFIED:
+//*LAST MODIFIED:   Wednesday, 28 April 2021 12:46
 //*LICENSE:         Academic Free License
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef FREQ_READER
 #define FREQ_READER
-#define DEFAULT_PERIOD 1
-#include <Arduino.h>
 
-class FreqReaderDigital
+#define DEFAULT_PERIOD 1u
+
+
+#include <Arduino.h>
+#include <stdint.h>
+
+struct pinInfo
+{
+  uint8_t  Bit { }, Port{ }, Timer { };
+  volatile uint8_t *Reg { }, *Out { };
+};
+
+
+class FreqReader
 {
 public:
-  FreqReaderDigital(const uint8_t &inPutSignalPin)
-            :SignalPin{inPutSignalPin}
-  { }
-
-  inline void begin()
+  FreqReader(const uint8_t &inPutSignalPin) :_signalPin{inPutSignalPin}
   {
-    pinMode(SignalPin, INPUT);      //Declares the input pin
-    digitalWrite(SignalPin, HIGH);  //Enables internal pull-up resistor
-    set = true;                     //To verify that begin has been called.
+
+  }
+
+  FreqReader() = default;
+
+  inline void init()   //Sets pin as input pin.
+  {
+    _inputPin.Bit = digitalPinToBitMask(_signalPin);
+    _inputPin.Port = digitalPinToPort(_signalPin);
+    if (_inputPin.Port == NOT_A_PIN) return;
+
+    _inputPin.Reg = portModeRegister(_inputPin.Port);
+    _inputPin.Out = portOutputRegister(_inputPin.Port);
+
+    uint8_t oldSREG = SREG;
+    cli();
+    *(_inputPin.Reg) &= ~(_inputPin.Bit);
+    *(_inputPin.Out) &= ~(_inputPin.Bit);
+    SREG = oldSREG;
+    _init = 1;
   }
 
   unsigned long getHz(const uint8_t &period);
@@ -34,38 +58,10 @@ public:
   unsigned long getMHz(void) { return (getHz()/1000); }
 
 private:
-  bool set { };
-  uint8_t SignalPin { }, Check {HIGH};
-  uint32_t PulseCount { };
+  pinInfo _inputPin;
+  uint8_t _signalPin { };
+  bool _init { 0 };
 };
 
 
-
-class FreqReaderAnalogue    //TODO: Reimplement using ADC
-{
-public:
-  FreqReaderAnalogue(const uint8_t &inPutSignalPin)
-                      :SignalPin{inPutSignalPin}
-  { }
-
-  inline void begin()
-  {
-    pinMode(SignalPin, INPUT);
-    set = true;
-  }
-
-  unsigned long getHz(const uint8_t &period);
-  unsigned long getKHz(const uint8_t &period) { return (getHz(period)/1000); }
-  unsigned long getMhz(const uint8_t &period) { return (getHz(period)/1000000); }
-
-  unsigned long getHz(void) { return (getHz(DEFAULT_PERIOD)); }
-  unsigned long getKHz(void) { return (getHz()/1000); }
-  unsigned long getMhz(void) { return (getHz()/1000000); }
-
-private:
-  bool set { };
-  uint8_t SignalPin { };
-  uint32_t PulseCount { };
-
-};
 #endif
