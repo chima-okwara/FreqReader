@@ -1,34 +1,25 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //*FILE NAME:       main.cpp
 //*FILE DESC:       Source file for FreqReader library.
-//*FILE VERSION:    0.3.1
+//*FILE VERSION:    0.4.0
 //*FILE AUTHOR:     Chimaroke Okwara
-//*LAST MODIFIED:   Wednesday, 28 April 2021 12:46
+//*LAST MODIFIED:   Saturday, 15 May 2021 09:41
 //*LICENSE:         Academic Free License
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <Arduino.h>
 #include <FreqReader.hpp>
 
-
-
-unsigned long FreqReader::getHz(const uint8_t &period) //TODO: Reimplement using timer/counter
+uint32_t FreqReader::getHz(const uint32_t &period) //TODO: Reimplement using timer/counter
 {
-  if (!_init)
-    this->init();
-  uint8_t Check = HIGH;
-  uint8_t PulseCount = 0;
-  auto tempo {millis()+(period*1000)};
-  while(millis()<tempo)
+  tempo = millis()+(period*1000);
+  while(millis() <= tempo)
   {
-    if(*portInputRegister(_inputPin.Port) & _inputPin.Bit)
-    {
-      if(Check == HIGH)
-        ++PulseCount;
-      Check = LOW;
-    }
-    else
-      Check = HIGH;
+    *PulseCount += checkPulse();
   }
 
-  return (PulseCount/period);
+  return ((*PulseCount)/(period));
+}
+
+ISR(TIMER1_OVF_vect)
+{
 }

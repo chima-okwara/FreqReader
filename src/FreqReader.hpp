@@ -1,9 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //*FILE NAME:       main.cpp
 //*FILE DESC:       Header file for FreqReader library.
-//*FILE VERSION:    0.3.1
+//*FILE VERSION:    0.4.0
 //*FILE AUTHOR:     Chimaroke Okwara
-//*LAST MODIFIED:   Wednesday, 28 April 2021 12:46
+//*LAST MODIFIED:   Saturday, 15 May 2021 09:41
 //*LICENSE:         Academic Free License
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef FREQ_READER
@@ -14,54 +14,48 @@
 
 #include <Arduino.h>
 #include <stdint.h>
-
-struct pinInfo
-{
-  uint8_t  Bit { }, Port{ }, Timer { };
-  volatile uint8_t *Reg { }, *Out { };
-};
+#include <pincontrol.hpp>
 
 
-class FreqReader
+class FreqReader: protected pin
 {
 public:
-  FreqReader(const uint8_t &inPutSignalPin) :_signalPin{inPutSignalPin}
+  FreqReader(const uint8_t &inPutSignalPin) :pin::pin{inPutSignalPin, INPUT}
   {
 
   }
 
   FreqReader() = default;
 
-  inline void init()   //Sets pin as input pin.
+  ~FreqReader()
   {
-    _inputPin.Bit = digitalPinToBitMask(_signalPin);
-    _inputPin.Port = digitalPinToPort(_signalPin);
-    if (_inputPin.Port == NOT_A_PIN) return;
-
-    _inputPin.Reg = portModeRegister(_inputPin.Port);
-    _inputPin.Out = portOutputRegister(_inputPin.Port);
-
-    uint8_t oldSREG = SREG;
-    cli();
-    *(_inputPin.Reg) &= ~(_inputPin.Bit);
-    *(_inputPin.Out) &= ~(_inputPin.Bit);
-    SREG = oldSREG;
-    _init = 1;
+    delete PulseCount;
   }
 
-  unsigned long getHz(const uint8_t &period);
-  unsigned long getKHz(const uint8_t &period) { return (getHz(period)/1000); }
-  unsigned long getMhz(const uint8_t &period) { return (getHz(period)/1000000); }
 
-  unsigned long getHz(void) { return(getHz(DEFAULT_PERIOD)); }
-  unsigned long getKHz(void) { return (getHz()/1000); }
-  unsigned long getMHz(void) { return (getHz()/1000); }
+  inline void init(void)                    //Sets pin as input pin.
+  {
+    pin::set();
+    pin::write(LOW);
+    noInterrupts();
+  }
+
+  uint_fast32_t checkPulse(void)                  //Returns 1 if input pin is set to high
+  {
+    return((*portInputRegister(port) & bit) ? (1) : (0));
+  }
+
+  uint32_t getHz(const uint32_t &period);
+  uint32_t getKHz(const uint32_t &period) { return (getHz(period)/1000); }
+  uint32_t getMhz(const uint32_t &period) { return (getHz(period)/1000000); }
+
+  uint32_t getHz(void) { return(getHz(DEFAULT_PERIOD)); }
+  uint32_t getKHz(void) { return (getHz()/1000); }
+  uint32_t getMHz(void) { return (getHz()/1000); }
 
 private:
-  pinInfo _inputPin;
-  uint8_t _signalPin { };
-  bool _init { 0 };
+  unsigned long tempo;                    //How long for to take reading.
+  uint32_t *PulseCount = new uint32_t;    //Input pulse counter.
+//  uint32_t *Check = new uint32_t{ };
 };
-
-
 #endif
